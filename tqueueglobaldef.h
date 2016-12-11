@@ -1,8 +1,6 @@
-
-
-#define SHM_KEY  12345678
-#define SEM_KEY  87654321
-#define SHM_SIZE 1012
+#define SHM_KEY  0x123456781
+#define SEM_KEY  0x876543211
+#define SHM_SIZE 10240
 
 enum ERR_CODE
 {

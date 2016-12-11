@@ -2,6 +2,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/types.h>
+#include <sys/sem.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -93,6 +94,13 @@ int TQueue::InitAttach(int shm_key, int lock_key)
 		printf("ERR! %s shm is not exist\n", __func__);
 		return -1;
 	}
+
+	m_LockId = semget((key_t)lock_key, 0, 0);
+	if(m_LockId == -1)
+	{
+		printf("ERR! %s sem is not exist\n", __func__);
+		return -1;
+	}
 	
 	m_pQueue = (QueueHeader*)shmat(shm_id, NULL, SHM_R|SHM_W);
 	if((void*)m_pQueue == (void*)-1)
@@ -119,6 +127,31 @@ int TQueue::InitForce(int shm_key, int lock_key)
 		return -1;
 	}
 
+	m_LockId = semget((key_t)lock_key, 0, 0666);
+	if(m_LockId != -1)
+	{
+		printf("ERR! %s->%d semget failed! errno %d\n",
+				__func__, __LINE__, errno);
+		return -1;
+	}
+
+	m_LockId = semget((key_t)lock_key, 1, 0666 | IPC_CREAT | IPC_EXCL);
+	if(m_LockId == -1)
+	{
+		printf("ERR! %s->%d semget failed! errno %d\n",
+				__func__, __LINE__, errno);
+		return -1;
+	}
+
+	union semun sem_ctr;
+	sem_ctr.val = 1;
+	if(semctl(m_LockId, 0, SETVAL, sem_ctr) == -1)
+	{
+		printf("ERR! %s->%d semctl failed! errno %d\n",
+				__func__, __LINE__, errno);
+		return -1;
+	}
+
 	m_pQueue = (QueueHeader*)shmat(shm_id, NULL, 0);
 	if((void*)m_pQueue == (void*)-1)
 	{
@@ -136,7 +169,6 @@ int TQueue::InitForce(int shm_key, int lock_key)
 
 int TQueue::InQueue(TQueueMsg &msg)
 {
-	printf("write %d read %d count %d\n", m_pQueue->m_Write, m_pQueue->m_Read, m_pQueue->m_Count);
 	int iMsgLen = msg.GetLength();
 	if(iMsgLen < 0 || iMsgLen > m_Size)
 	{
@@ -144,6 +176,7 @@ int TQueue::InQueue(TQueueMsg &msg)
 				__func__);
 		return -1;
 	}
+	Lock();
 	int iDistToEnd =  m_Size - m_pQueue->m_Write;
 	if(m_pQueue->m_Write < m_pQueue->m_Read)
 	{
@@ -151,6 +184,7 @@ int TQueue::InQueue(TQueueMsg &msg)
 		{
 			printf("ERR! %s queue is full, can not inqueue\n",
 					__func__);
+			UnLock();
 			return ERR_QUEUE_FULL;
 		}
 	}
@@ -161,6 +195,7 @@ int TQueue::InQueue(TQueueMsg &msg)
 		{
 			printf("ERR! %s queue is not enough to write the msg!\n",
 					__func__);
+			UnLock();
 			return ERR_QUEUE_FULL;
 		}
 	}
@@ -168,6 +203,7 @@ int TQueue::InQueue(TQueueMsg &msg)
 	{
 		printf("ERR! write=read %s queue is full!\n",
 				__func__);
+		UnLock();
 		return ERR_QUEUE_FULL;
 	}
 
@@ -188,15 +224,18 @@ int TQueue::InQueue(TQueueMsg &msg)
 	}
 
 	m_pQueue->m_Count++;
+	UnLock();
 	return QUEUE_OPER_OK;
 }
 
 int TQueue::OutQueue(TQueueMsg &msg)
 {
 	printf("write %d read %d count %d\n", m_pQueue->m_Write, m_pQueue->m_Read, m_pQueue->m_Count);
+	Lock();
 	if(m_pQueue->m_Count <= 0)
 	{
 		printf("ERR! %s queue is empty\n", __func__);
+		UnLock();
 		return ERR_QUEUE_EMPTY;
 	}
 	int iDistToEnd = m_Size-m_pQueue->m_Read;
@@ -206,6 +245,7 @@ int TQueue::OutQueue(TQueueMsg &msg)
 	{
 		printf("ERR! %s it's not a complete msg!\n",
 				__func__);
+		UnLock();
 		return -1;
 	}
 
@@ -236,6 +276,7 @@ int TQueue::OutQueue(TQueueMsg &msg)
 			|| (iDist < 0 && m_Size + iDist < iMsgLen))
 	{
 		printf("ERR! %s wrong msg\n", __func__);
+		UnLock();
 		return -1;
 	}
 
@@ -259,5 +300,34 @@ int TQueue::OutQueue(TQueueMsg &msg)
 	}
 
 	m_pQueue->m_Count--;
+	UnLock();
 	return 0;
+}
+
+void TQueue::Lock()
+{
+	struct sembuf sem_buf;
+	sem_buf.sem_num = 0;
+	sem_buf.sem_op = -1;
+	sem_buf.sem_flg = 0;
+	if(semop(m_LockId, &sem_buf, 1) == -1)
+	{
+		printf("ERR! %s->%d semop failed! errno %d", 
+				__func__, __LINE__, errno);
+		return;
+	}
+}
+
+void TQueue::UnLock()
+{
+	struct sembuf sem_buf;
+	sem_buf.sem_num = 0;
+	sem_buf.sem_op = 1;
+	sem_buf.sem_flg = 0;
+	if(semop(m_LockId, &sem_buf, 1) == -1)
+	{
+		printf("ERR! %s->%d semop failed! errno %d", 
+				__func__, __LINE__, errno);
+		return;
+	}
 }

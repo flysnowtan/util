@@ -2,6 +2,15 @@
 #include "tqueueglobaldef.h"
 #include <stdint.h>
 
+
+union semun {
+	int              val;    /* Value for SETVAL */
+	struct semid_ds *buf;    /* Buffer for IPC_STAT, IPC_SET */
+	unsigned short  *array;  /* Array for GETALL, SETALL */
+	struct seminfo  *__buf;  /* Buffer for IPC_INFO
+								(Linux-specific) */
+};
+
 struct TMsgHeader
 {
 	int m_MsgSize;
@@ -43,8 +52,9 @@ public:
 	int InitAttach(int shm_key, int lock_key);
 	int InQueue(TQueueMsg &msg);
 	int OutQueue(TQueueMsg &msg);
-
 private:
+	void Lock();
+	void UnLock();
 	QueueHeader *m_pQueue;
 	uint32_t m_Size;
 	int m_LockId;

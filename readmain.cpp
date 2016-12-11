@@ -33,6 +33,7 @@ int main(void)
 		std::string buffer((char*)msg.GetDataBuffer(), msg.GetDataLength());
 		printf("out succ! type %d len %d msg %s\n", 
 				msg.GetType(), msg.GetLength(), buffer.c_str());
+		usleep(100000);
 	}
 	return 0;
 }
