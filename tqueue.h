@@ -61,4 +61,4 @@ private:
 	int m_LockId;
 };
 
-#endif __TQUEUE__H__
+#endif 
