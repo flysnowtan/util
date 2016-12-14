@@ -1,4 +1,5 @@
-
+#ifndef __TQUEUE__H__
+#define __TQUEUE__H__
 #include "tqueueglobaldef.h"
 #include <stdint.h>
 
@@ -60,4 +61,4 @@ private:
 	int m_LockId;
 };
 
-
+#endif __TQUEUE__H__
