@@ -223,7 +223,7 @@ if(((ret < 0) && (errno != EAGAIN)) || ret == 0)
                     users[connfd].init(m_epollfd, connfd, client_address);
                 }
             }
-            else if((sockfd == sig_pipefd[0]) && (events[i].events & EPOOLIN))
+            else if((sockfd == sig_pipefd[0]) && (events[i].events & EPOLLIN))
             {
                 int sig;
                 char signals[1024];
