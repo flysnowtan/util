@@ -13,6 +13,7 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <signal.h>
+#include <sys/wait.h>
 
 class TProcess 
 {
@@ -147,7 +148,7 @@ void TProcessPool<T>::setup_sig_pipe()
 	m_epollfd = epoll_create(5);
 	assert(m_epollfd != -1);
 	
-	int ret = socketpiar(PF_UNIX, SOCK_STREAM, 0, sig_pipefd);
+	int ret = socketpair(PF_UNIX, SOCK_STREAM, 0, sig_pipefd);
     assert(ret != -1);
 
     setnonblocking(sig_pipefd[1]);
