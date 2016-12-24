@@ -9,7 +9,7 @@ public:
     {   
         m_epollfd = epollfd;
         m_sockfd = sockfd;
-        m_address+ client_addr;
+        m_address = client_addr;
         memset(m_buf, '\0', BUFFER_SIZE);
         m_read_idx = 0;
     }   
@@ -85,7 +85,7 @@ break;
         }
     }
 
-pravite:
+private:
     static const int BUFFER_SIZE = 1024;
     static int m_epollfd;
     int m_sockfd;
@@ -121,7 +121,7 @@ int main(int argc, char* argv[])
     ret = listen(listenfd, 5);
     assert(ret != -1);
 
-    TProcessPool<cgi_conn>* pool = TProcessPool<cgi_conn>::create(listenfd);
+    TProcessPool<cgi_conn>* pool = TProcessPool<cgi_conn>::CreatePool(listenfd);
     if(pool)
     {
         pool->Run();
