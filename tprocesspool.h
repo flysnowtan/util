@@ -12,6 +12,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
+#include <signal.h>
 
 class TProcess 
 {
@@ -114,7 +115,7 @@ static void addsig(int sig, void(handler)(int), bool restart = true)
 
 template<typename T>
 TProcessPool<T>::TProcessPool(int listenfd, int process_num)
-	:m_listen(fd), m_process_number(process_num), m_idx(-1),m_stop(false)
+	:m_listenfd(listenfd), m_process_number(process_num), m_idx(-1),m_stop(false)
 {
 	assert((process_num > 0) && (process_num <= MAX_PROCESS_NUMBER));
 	m_sub_process = new TProcess[process_num];
@@ -222,7 +223,7 @@ if(((ret < 0) && (errno != EAGAIN)) || ret == 0)
                     users[connfd].init(m_epollfd, connfd, client_address);
                 }
             }
-            else if((sockfd == sig_pipefd[0]) && (events[i].events & EPOOOOLLIN))
+            else if((sockfd == sig_pipefd[0]) && (events[i].events & EPOOLIN))
             {
                 int sig;
                 char signals[1024];
@@ -311,7 +312,7 @@ void TProcessPool<T>::run_parent()
                     }
                     j =(j+1)%m_process_number;
                 }
-                while(j != subprocess_counter);
+                while(j != sub_process_counter);
 
                 if(m_sub_process[j].m_pid == -1)
                 {
@@ -369,7 +370,7 @@ void TProcessPool<T>::run_parent()
                             case SIGTERM:
 
 					case SIGINT:
-                                print("kill all child now\n");
+                                printf("kill all child now\n");
                                 for(int k = 0; k < m_process_number; k++)
                                 {
                                     int pid = m_sub_process[i].m_pid;
