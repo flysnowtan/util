@@ -78,7 +78,7 @@ break;
                 {
                     close(STDOUT_FILENO);
                     dup(m_sockfd);
-                    execl(m_buf, m_buf, 0);
+                    execl(m_buf, m_buf, (char*)0);
                     exit(0);
                 }
             }
