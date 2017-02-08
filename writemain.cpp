@@ -2,9 +2,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <time.h>
 
 int main(void)
 {
+	srand(time(NULL));
 	TQueue rQueue(SHM_SIZE);
 	int ret = rQueue.InitForce(SHM_KEY, SEM_KEY);
 	if(ret != 0)
@@ -13,7 +16,8 @@ int main(void)
 				__func__, __LINE__, ret);
 		return 0;
 	}
-	for(int i = 0; i < 10000; i++)
+	int i = 0;
+	while(true)
 	{
 		char buffer[1024];
 		sprintf(buffer, "test%d", i);
@@ -26,11 +30,12 @@ int main(void)
 					__func__, __LINE__, ret);
 			if(ret == ERR_QUEUE_FULL)
 			{
-				sleep(1000);
+				continue;
 			}
 			return 0;
 		}
-		usleep(100000);
+		usleep(rand()%100000);
+		i++;
 	}
 	return 0;
 }

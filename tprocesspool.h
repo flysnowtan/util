@@ -52,9 +52,9 @@ private:
 	void run_child();
 
 private:
-	static const int MAX_PROCESS_NUMBER = 16;
+	static const int MAX_PROCESS_NUM = 16;
 	static const int USER_PER_PROCESS = 65536;
-	static const int MAX_EVENT_NUMBER = 10240;
+	static const int MAX_EVENT_NUM = 10240;
 	int m_process_number;
 	int m_idx;
 	int m_epollfd;
@@ -96,7 +96,7 @@ static void sig_handler(int sig)
 {
 	int save_errno = errno;
 	int msg = sig;
-	send(sig_pipefd[1], (char*)msg, 1, 0);
+	send(sig_pipefd[1], (char*)&msg, 1, 0);
 	errno = save_errno;
 }
 
@@ -118,7 +118,7 @@ template<typename T>
 TProcessPool<T>::TProcessPool(int listenfd, int process_num)
 	:m_listenfd(listenfd), m_process_number(process_num), m_idx(-1),m_stop(false)
 {
-	assert((process_num > 0) && (process_num <= MAX_PROCESS_NUMBER));
+	assert((process_num > 0) && (process_num <= MAX_PROCESS_NUM));
 	m_sub_process = new TProcess[process_num];
 	assert(m_sub_process);
 
@@ -394,7 +394,6 @@ void TProcessPool<T>::run_parent()
             }
         }
     }
-
     close(m_epollfd);
 }
 

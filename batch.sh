@@ -1,8 +1,8 @@
 ./writer &
-./attach &
-./attach &
-./attach &
-./attach &
+./attacher &
+./attacher &
+./attacher &
+./attacher &
 ./reader &
 ./reader &
 ./reader &
