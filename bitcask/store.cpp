@@ -97,7 +97,21 @@ int TStore::Get(int32_t fileNo, uint32_t idx, StoreRecord& record)
 		return -1;
 	}
 
+	char sBeginBuf[BEGIN_LEN] = {0};
+	ssize_t iSize = preaad(fd, sBeginBuf, sizeof(sBeginBuf), idx);
+	if(iSize == 0)
+	{
+		return 0;
+	}
+	else if(iSize != sizeof(sBeginBuf))
+	{
+		printf("pread err\n");
+		return -1;
+	}
 
+	idx += iSize;
+
+	
 
 
 

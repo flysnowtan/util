@@ -59,3 +59,9 @@ int TRecord::Buffer2Record(char * pBuf, uint32_t len, StoreRecord * pRecord)
 
     return 0;
 }
+
+int TRecord::GetRecordLen(char *pBuf, uint32_t len)
+{
+	return 0;
+}
+
